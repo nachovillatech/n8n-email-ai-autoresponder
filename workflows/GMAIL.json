@@ -1,0 +1,141 @@
+{
+  "name": "EMAIL_AI_AUTORESPONDER",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.textPlain }}",
+        "options": {
+          "systemMessage": "Eres Lima, el asistente virtual de logística de la empresa.\nTu personalidad es profesional, amable y concisa.\nSolo respondes preguntas relacionadas con logística, pedidos, clientes, artículos y stock.\nSi alguien te pregunta algo que no tiene que ver con logística, responde educadamente que solo puedes ayudar con temas empresariales.\n\nTienes acceso a una base de datos PostgreSQL con las siguientes tablas:\n- pedido: pedidos de clientes\n- lineas_ped: líneas de cada pedido (columnas: articulo, pedido, cantidad)\n- articulo: productos disponibles (columnas: articulo, descripcion)\n- stockmov_ped: movimientos de stock\n- vista_pedidos_completo: vista completa de pedidos (numero, cliente, fecha_creacion, fecha_entrega, importe_pedido, liquido_pedido, bloqueado, servido)\n\nPara unir tablas:\n- lineas_ped.articulo = articulo.articulo\n- pedido.numero = lineas_ped.pedido\n\nCuando te pregunten sobre datos, consulta siempre la base de datos y responde con datos reales.\nResponde siempre en español de forma clara y profesional.\nEstás respondiendo a un email. Usa un formato formal de respuesta de correo, sin emojis excesivos.\nFirma siempre como:\nLima - Asistente Virtual\nassistant@yourcompany.com"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "2e00135c-c115-4bea-a280-3956df3b6454",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "google/gemma-4-e2b",
+          "mode": "list",
+          "cachedResultName": "google/gemma-4-e2b"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        96,
+        208
+      ],
+      "id": "76a8dbf4-ac9c-471c-ab2d-1e9c3c1384c9",
+      "name": "OpenAI Chat Model"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Consulta la base de datos para responder preguntas sobre pedidos, clientes y stock",
+        "operation": "executeQuery",
+        "query": "{{ $fromAI('query', 'SQL query to execute') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.7,
+      "position": [
+        384,
+        208
+      ],
+      "id": "3cf84a1b-376e-428e-88b5-ea765a2c7bba",
+      "name": "Execute a SQL query in Postgres"
+    },
+    {
+      "parameters": {
+        "fromEmail": "YOUR_EMAIL@gmail.com",
+        "toEmail": "={{ $('Email Trigger (IMAP)').item.json.from.match(/<(.+)>/)[1] }}",
+        "subject": "={{ 'Re: ' + $('Email Trigger (IMAP)').item.json.subject }}",
+        "emailFormat": "text",
+        "text": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        592,
+        0
+      ],
+      "id": "030903d0-f0c0-4d28-a4bb-117833330e75",
+      "name": "Send an Email"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        16
+      ],
+      "id": "dbd57310-0d82-4466-8557-f9a91f5d3fe3",
+      "name": "Email Trigger (IMAP)"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query in Postgres": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Trigger (IMAP)": {
+      "main": [
+        [
+          {
+            "node": "Email Trigger (IMAP)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
