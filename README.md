@@ -20,25 +20,16 @@ Permite automatizar la atención de soporte, logística o atención al cliente p
 ---
 ## 🏗️ Arquitectura del Sistema
 
-  
-
-📩 Correo Entrante (Cliente / Proveedor)
-│
-▼
-📫 Email Trigger (n8n IMAP)
-│
-▼
-🤖 AI Agent (Orquestador)
-├── 🧠 Motor LLM (LM Studio / vLLM)
-└── 🛠️ Postgres SQL Tool (Consulta de pedidos y stock)
-│
-▼
-✉️ Send Email Node (n8n SMTP)
-│
-▼
-📤 Respuesta Formal Enviada al Remitente
-
-
+```mermaid
+flowchart TD
+    A[📩 Correo Entrante] --> B[📫 Email Trigger - n8n IMAP]
+    B --> C[🤖 AI Agent - Orquestador]
+    C --> D[🧠 Motor LLM - LM Studio / vLLM]
+    C --> E[🗄️ Postgres SQL Tool]
+    D --> C
+    E --> C
+    C --> F[✉️ Send Email Node - n8n SMTP]
+    F --> G[📤 Respuesta Formal Enviada]
   
 ---
 ## 📁 Estructura del Repositorio
